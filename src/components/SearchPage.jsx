@@ -7,31 +7,34 @@
 // 3. JSX        → HTMLのような記法でUIを記述
 // ============================================
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-// ↑ useNavigate: プログラムからページ遷移するためのフック
 
 // TMDB API の設定
-// TMDBは無料で使える映画データベースAPI
-const API_KEY = '2ac077f6d6f9b4c6eab1376e8b459937';
+// ★★★ ここにあなたのAPIキーを入れてください ★★★
+const API_KEY = 'e82f51095289d9792d8eb38e378c888f';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w300';
 
 function SearchPage() {
   // ------------------------------------------
-  // 【解説】useState（状態管理）
+  // 【解説】sessionStorage で検索結果を保持
   //
-  // const [値, 値を変える関数] = useState(初期値);
-  //
-  // 6th Man では var query = '' のように普通の変数を使いましたが、
-  // Reactでは useState を使います。
-  // 理由: useState で値を変えると、Reactが自動で画面を更新してくれる。
-  // 普通の変数を変えても画面は変わりません。
+  // 普通の useState だけだと、詳細ページに移動して
+  // 戻ったときに検索結果が消えてしまいます。
+  // sessionStorage に保存しておけば、戻っても復元できます。
   // ------------------------------------------
-  const [query, setQuery] = useState('');
-  const [movies, setMovies] = useState([]);
+  const [query, setQuery] = useState(() => {
+    return sessionStorage.getItem('search_query') || '';
+  });
+  const [movies, setMovies] = useState(() => {
+    const saved = sessionStorage.getItem('search_results');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [searched, setSearched] = useState(() => {
+    return sessionStorage.getItem('search_searched') === 'true';
+  });
 
   const navigate = useNavigate();
 
@@ -48,7 +51,6 @@ function SearchPage() {
   // ------------------------------------------
   async function handleSearch() {
     if (!query.trim()) return;
-    // ↑ 空欄なら何もしない。trim()は前後の空白を除去
 
     setLoading(true);
     setSearched(true);
@@ -57,15 +59,22 @@ function SearchPage() {
       const response = await fetch(
         `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=ja-JP`
       );
-      // ↑ search/multi: 映画とTVシリーズを同時に検索できるエンドポイント
-      //   search/movie だと映画だけだったが、multiならNetflix独占ドラマも出る
+      // ↑ search/multi: 映画とTVシリーズを同時に検索するエンドポイント
+      //   search/movie だと映画だけだが、multi なら Netflix独占ドラマも出る
 
       const data = await response.json();
+
       // 映画とTVだけに絞る（人物などは除外）
       const filtered = (data.results || []).filter(
         (item) => item.media_type === 'movie' || item.media_type === 'tv'
       );
+
       setMovies(filtered);
+
+      // 検索結果を sessionStorage に保存（ページ遷移しても残る）
+      sessionStorage.setItem('search_query', query);
+      sessionStorage.setItem('search_results', JSON.stringify(filtered));
+      sessionStorage.setItem('search_searched', 'true');
     } catch (error) {
       console.error('検索エラー:', error);
       setMovies([]);
@@ -81,19 +90,11 @@ function SearchPage() {
     }
   }
 
-  // ------------------------------------------
-  // 【解説】JSX（UIの記述）
-  //
-  // HTMLに似ていますが、いくつか違いがあります:
-  // - class → className（classはJSの予約語なので）
-  // - onclick → onClick（キャメルケース）
-  // - {} の中にJavaScriptを書ける
-  // ------------------------------------------
   return (
     <div className="fade-in">
       <div className="page-header">
         <h1>🔍 作品を検索</h1>
-        <p>映画のタイトルを入力して検索</p>
+        <p>映画やドラマのタイトルを入力して検索</p>
       </div>
 
       {/* 検索バー */}
@@ -101,16 +102,11 @@ function SearchPage() {
         <input
           className="search-input"
           type="text"
-          placeholder="作品名を入力..."
+          placeholder="映画・ドラマ名を入力..."
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={handleKeyDown}
         />
-        {/*
-          onChange: 入力が変わるたびに呼ばれる
-          e.target.value: 入力欄の現在の値
-          setQuery: その値で state を更新 → 画面も自動更新
-        */}
         <button className="search-btn" onClick={handleSearch}>
           検索
         </button>
@@ -123,12 +119,6 @@ function SearchPage() {
           <p>検索中...</p>
         </div>
       )}
-      {/*
-        【解説】条件付きレンダリング
-        {条件 && <要素>} は「条件がtrueの時だけ表示」の書き方。
-        6th Man では style.display = 'none' で切り替えていましたが、
-        Reactではこの書き方が基本です。
-      */}
 
       {/* 検索結果 */}
       {!loading && searched && movies.length === 0 && (
@@ -143,22 +133,15 @@ function SearchPage() {
         <div className="movie-grid">
           {movies.map((movie) => (
             <div
-              key={movie.id}
+              key={`${movie.media_type}-${movie.id}`}
               className="movie-card"
               onClick={() => navigate(`/detail/${movie.media_type}/${movie.id}`)}
             >
-              {/*
-                【解説】map と key
-                movies配列の各要素に対してカードを生成。
-                6th Man では for ループで html 文字列を組み立てましたが、
-                Reactでは .map() でコンポーネントの配列を返します。
-                key はReactが各要素を区別するために必要。
-              */}
               {movie.poster_path ? (
                 <img
                   className="movie-card-poster"
                   src={`${IMG_URL}${movie.poster_path}`}
-                  alt={movie.title}
+                  alt={movie.title || movie.name}
                 />
               ) : (
                 <div className="movie-card-poster" style={{
@@ -189,8 +172,8 @@ function SearchPage() {
       {!loading && !searched && (
         <div className="empty-state">
           <div className="empty-state-icon">🍿</div>
-          <h3>映画を検索してみよう</h3>
-          <p>観た映画や気になる映画のタイトルを入力してください</p>
+          <h3>映画やドラマを検索してみよう</h3>
+          <p>タイトルを入力してください（Netflix作品もOK）</p>
         </div>
       )}
     </div>
