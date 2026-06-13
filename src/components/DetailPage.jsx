@@ -229,7 +229,7 @@ function DetailPage() {
   return (
     <div className="fade-in">
       {/* 戻るボタン */}
-      <button className="btn-back" onClick={() => navigate(-1)}>
+      <button className="btn-back" onClick={() => window.history.back()}>
         ← 戻る
       </button>
       {/*
@@ -337,7 +337,7 @@ function DetailPage() {
           <button className="btn-save-review" onClick={handleSaveReview}>
             保存する
           </button>
-          <button className="btn-back" onClick={() => { navigate(-1); window.scrollTo(0, 0); }} style={{ margin: 0 }}>
+          <button className="btn-back" onClick={() => window.history.back()} style={{ margin: 0 }}>
             🏠 検索に戻る
           </button>
           {(rating > 0 || review) && (
