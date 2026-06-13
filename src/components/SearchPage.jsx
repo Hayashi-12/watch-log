@@ -1,54 +1,33 @@
 // ============================================
 // SearchPage.jsx - 作品検索ページ
 //
-// 【解説】React の基本3要素がすべて入っています
-// 1. useState   → 状態（データ）の管理
-// 2. useEffect  → 副作用（API通信など）の実行
-// 3. JSX        → HTMLのような記法でUIを記述
+// 【解説】props（プロップス）
+// 親コンポーネント（App.jsx）から渡されたデータを
+// 「props」として受け取ります。
+// これにより、ページ移動しても検索結果が消えません。
 // ============================================
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // TMDB API の設定
-// ★★★ ここにあなたのAPIキーを入れてください ★★★
 const API_KEY = 'e82f51095289d9792d8eb38e378c888f';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w300';
 
-function SearchPage() {
-  // ------------------------------------------
-  // 【解説】sessionStorage で検索結果を保持
-  //
-  // 普通の useState だけだと、詳細ページに移動して
-  // 戻ったときに検索結果が消えてしまいます。
-  // sessionStorage に保存しておけば、戻っても復元できます。
-  // ------------------------------------------
-  const [query, setQuery] = useState(() => {
-    return sessionStorage.getItem('search_query') || '';
-  });
-  const [movies, setMovies] = useState(() => {
-    const saved = sessionStorage.getItem('search_results');
-    return saved ? JSON.parse(saved) : [];
-  });
+// ------------------------------------------
+// 【解説】props の受け取り方
+//
+// function SearchPage({ query, setQuery, ... })
+// この {} の中身が、App.jsx から渡された値です。
+// App.jsx で <SearchPage query={searchQuery} ... /> と書くと、
+// ここで query として使えます。
+// ------------------------------------------
+function SearchPage({ query, setQuery, movies, setMovies, searched, setSearched }) {
   const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(() => {
-    return sessionStorage.getItem('search_searched') === 'true';
-  });
-
   const navigate = useNavigate();
 
-  // ------------------------------------------
   // 検索を実行する関数
-  //
-  // 【解説】async / await
-  // APIからデータを取得するには時間がかかるので、
-  // 「待つ」処理が必要。async/await はそのための書き方。
-  //
-  // fetch() → サーバーにリクエストを送る
-  // await   → レスポンスが返ってくるまで待つ
-  // .json() → レスポンスをJSONに変換
-  // ------------------------------------------
   async function handleSearch() {
     if (!query.trim()) return;
 
@@ -59,22 +38,14 @@ function SearchPage() {
       const response = await fetch(
         `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=ja-JP`
       );
-      // ↑ search/multi: 映画とTVシリーズを同時に検索するエンドポイント
-      //   search/movie だと映画だけだが、multi なら Netflix独占ドラマも出る
 
       const data = await response.json();
 
-      // 映画とTVだけに絞る（人物などは除外）
       const filtered = (data.results || []).filter(
         (item) => item.media_type === 'movie' || item.media_type === 'tv'
       );
 
       setMovies(filtered);
-
-      // 検索結果を sessionStorage に保存（ページ遷移しても残る）
-      sessionStorage.setItem('search_query', query);
-      sessionStorage.setItem('search_results', JSON.stringify(filtered));
-      sessionStorage.setItem('search_searched', 'true');
     } catch (error) {
       console.error('検索エラー:', error);
       setMovies([]);
@@ -83,7 +54,6 @@ function SearchPage() {
     setLoading(false);
   }
 
-  // Enterキーでも検索できるようにする
   function handleKeyDown(e) {
     if (e.key === 'Enter') {
       handleSearch();
@@ -97,7 +67,6 @@ function SearchPage() {
         <p>映画やドラマのタイトルを入力して検索</p>
       </div>
 
-      {/* 検索バー */}
       <div className="search-bar">
         <input
           className="search-input"
@@ -112,7 +81,6 @@ function SearchPage() {
         </button>
       </div>
 
-      {/* ローディング表示 */}
       {loading && (
         <div className="loading">
           <div className="loading-spinner"></div>
@@ -120,7 +88,6 @@ function SearchPage() {
         </div>
       )}
 
-      {/* 検索結果 */}
       {!loading && searched && movies.length === 0 && (
         <div className="empty-state">
           <div className="empty-state-icon">🎥</div>
@@ -168,7 +135,6 @@ function SearchPage() {
         </div>
       )}
 
-      {/* 初期状態（未検索時） */}
       {!loading && !searched && (
         <div className="empty-state">
           <div className="empty-state-icon">🍿</div>

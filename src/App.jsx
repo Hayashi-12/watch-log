@@ -1,20 +1,19 @@
 // ============================================
 // App.jsx - アプリ全体の司令塔
 //
-// 【解説】Reactのコンポーネントとは？
-// 6th Man では1つのHTMLに全部書きましたが、
-// Reactでは画面やパーツを「コンポーネント」という
-// 独立したパーツに分けて管理します。
+// 【解説】状態の「リフトアップ」
+// SearchPage の中で検索結果を管理すると、
+// 詳細ページに移動した時点で SearchPage が消えて
+// 状態もリセットされてしまいます。
 //
-// App.jsx は全コンポーネントをまとめる
-// 一番上の「親コンポーネント」です。
+// そこで検索の状態を App（親）で管理し、
+// SearchPage に渡す（props）ことで、
+// ページを移動しても検索結果が残るようにします。
+// これを「状態のリフトアップ」と呼びます。
 // ============================================
 
+import { useState } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
-// ↑ react-router-dom: ページ遷移を管理するライブラリ
-//   - BrowserRouter: ルーティング全体を囲むラッパー
-//   - Routes / Route: URLとコンポーネントの対応を定義
-//   - NavLink: 現在のページをハイライトできるリンク
 
 import SearchPage from './components/SearchPage';
 import MyListPage from './components/MyListPage';
@@ -23,8 +22,13 @@ import StatsPage from './components/StatsPage';
 import './App.css';
 
 function App() {
+  // 検索の状態をAppで管理（リフトアップ）
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [hasSearched, setHasSearched] = useState(false);
+
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/watch-log">
       {/* ===== ヘッダー ===== */}
       <header className="header">
         <div className="logo">
@@ -32,11 +36,6 @@ function App() {
           <div>Watch<span>Log</span></div>
         </div>
         <nav className="nav">
-          {/*
-            NavLink は今いるページに自動で "active" クラスをつける。
-            6th Man では自分でclassList.add/removeしていたのを
-            Reactが自動でやってくれます。
-          */}
           <NavLink to="/">検索</NavLink>
           <NavLink to="/mylist">マイリスト</NavLink>
           <NavLink to="/stats">統計</NavLink>
@@ -46,14 +45,16 @@ function App() {
       {/* ===== ページ本体 ===== */}
       <main className="main">
         <Routes>
-          {/*
-            【解説】URLとコンポーネントの対応表
-            / → SearchPage（検索画面）
-            /mylist → MyListPage（マイリスト）
-            /detail/:id → DetailPage（作品詳細。:idは作品ごとに変わる）
-            /stats → StatsPage（統計）
-          */}
-          <Route path="/" element={<SearchPage />} />
+          <Route path="/" element={
+            <SearchPage
+              query={searchQuery}
+              setQuery={setSearchQuery}
+              movies={searchResults}
+              setMovies={setSearchResults}
+              searched={hasSearched}
+              setSearched={setHasSearched}
+            />
+          } />
           <Route path="/mylist" element={<MyListPage />} />
           <Route path="/detail/:type/:id" element={<DetailPage />} />
           <Route path="/stats" element={<StatsPage />} />
