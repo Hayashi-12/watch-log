@@ -13,7 +13,7 @@ import { useNavigate } from 'react-router-dom';
 
 // TMDB API の設定
 // TMDBは無料で使える映画データベースAPI
-const API_KEY = 'e82f51095289d9792d8eb38e378c888f';
+const API_KEY = '2ac077f6d6f9b4c6eab1376e8b459937';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w300';
 
@@ -55,13 +55,17 @@ function SearchPage() {
 
     try {
       const response = await fetch(
-        `${BASE_URL}/search/movie?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=ja-JP`
+        `${BASE_URL}/search/multi?api_key=${API_KEY}&query=${encodeURIComponent(query)}&language=ja-JP`
       );
-      // ↑ encodeURIComponent: 日本語をURLに使える形に変換
-      //   例: "千と千尋" → "%E5%8D%83%E3%81%A8%E5%8D%83%E5%B0%8B"
+      // ↑ search/multi: 映画とTVシリーズを同時に検索できるエンドポイント
+      //   search/movie だと映画だけだったが、multiならNetflix独占ドラマも出る
 
       const data = await response.json();
-      setMovies(data.results || []);
+      // 映画とTVだけに絞る（人物などは除外）
+      const filtered = (data.results || []).filter(
+        (item) => item.media_type === 'movie' || item.media_type === 'tv'
+      );
+      setMovies(filtered);
     } catch (error) {
       console.error('検索エラー:', error);
       setMovies([]);
@@ -141,7 +145,7 @@ function SearchPage() {
             <div
               key={movie.id}
               className="movie-card"
-              onClick={() => navigate(`/detail/${movie.id}`)}
+              onClick={() => navigate(`/detail/${movie.media_type}/${movie.id}`)}
             >
               {/*
                 【解説】map と key
@@ -165,9 +169,10 @@ function SearchPage() {
                 </div>
               )}
               <div className="movie-card-info">
-                <div className="movie-card-title">{movie.title}</div>
+                <div className="movie-card-title">{movie.title || movie.name}</div>
                 <div className="movie-card-year">
-                  {movie.release_date ? movie.release_date.substring(0, 4) : '---'}
+                  {(movie.release_date || movie.first_air_date || '').substring(0, 4) || '---'}
+                  {movie.media_type === 'tv' && ' (TV)'}
                 </div>
                 {movie.vote_average > 0 && (
                   <div className="movie-card-rating">

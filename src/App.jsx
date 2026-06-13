@@ -24,7 +24,7 @@ import './App.css';
 
 function App() {
   return (
-    <BrowserRouter basename="/watch-log">
+    <BrowserRouter>
       {/* ===== ヘッダー ===== */}
       <header className="header">
         <div className="logo">
@@ -55,7 +55,7 @@ function App() {
           */}
           <Route path="/" element={<SearchPage />} />
           <Route path="/mylist" element={<MyListPage />} />
-          <Route path="/detail/:id" element={<DetailPage />} />
+          <Route path="/detail/:type/:id" element={<DetailPage />} />
           <Route path="/stats" element={<StatsPage />} />
         </Routes>
       </main>

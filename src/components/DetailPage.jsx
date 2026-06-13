@@ -11,12 +11,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 // ↑ useParams: URLの :id 部分を取得するフック
 //   例: /detail/550 → useParams() → { id: '550' }
 
-const API_KEY = 'e82f51095289d9792d8eb38e378c888f';
+const API_KEY = '2ac077f6d6f9b4c6eab1376e8b459937';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w300';
 
 function DetailPage() {
-  const { id } = useParams();
+  const { type, id } = useParams();
+  // ↑ type: 'movie' or 'tv'、id: 作品ID
   const navigate = useNavigate();
 
   const [movie, setMovie] = useState(null);
@@ -49,8 +50,9 @@ function DetailPage() {
       setLoading(true);
       try {
         const response = await fetch(
-          `${BASE_URL}/movie/${id}?api_key=${API_KEY}&language=ja-JP`
+          `${BASE_URL}/${type}/${id}?api_key=${API_KEY}&language=ja-JP`
         );
+        // ↑ type が 'movie' なら /movie/123、'tv' なら /tv/456 になる
         const data = await response.json();
         setMovie(data);
       } catch (error) {
@@ -92,9 +94,10 @@ function DetailPage() {
 
     const movieData = {
       id: movie.id,
-      title: movie.title,
+      media_type: type,
+      title: movie.title || movie.name,
       poster_path: movie.poster_path,
-      release_date: movie.release_date,
+      release_date: movie.release_date || movie.first_air_date,
       vote_average: movie.vote_average,
       genres: movie.genres ? movie.genres.map((g) => g.name) : [],
       overview: movie.overview,
@@ -253,10 +256,15 @@ function DetailPage() {
         )}
 
         <div className="detail-info">
-          <h1>{movie.title}</h1>
+          <h1>{movie.title || movie.name}</h1>
           <div className="detail-meta">
-            {movie.release_date && <span>📅 {movie.release_date.substring(0, 4)}</span>}
+            {(movie.release_date || movie.first_air_date) && (
+              <span>📅 {(movie.release_date || movie.first_air_date).substring(0, 4)}</span>
+            )}
             {movie.runtime > 0 && <span>⏱ {movie.runtime}分</span>}
+            {movie.number_of_seasons && (
+              <span>📺 シーズン{movie.number_of_seasons}</span>
+            )}
             {movie.vote_average > 0 && (
               <span className="detail-rating">★ {movie.vote_average.toFixed(1)}</span>
             )}

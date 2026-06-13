@@ -84,7 +84,7 @@ function MyListPage() {
             <div
               key={movie.id}
               className="mylist-card"
-              onClick={() => navigate(`/detail/${movie.id}`)}
+              onClick={() => navigate(`/detail/${movie.media_type || 'movie'}/${movie.id}`)}
             >
               {movie.poster_path ? (
                 <img
