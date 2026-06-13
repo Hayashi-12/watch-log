@@ -11,7 +11,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 // ↑ useParams: URLの :id 部分を取得するフック
 //   例: /detail/550 → useParams() → { id: '550' }
 
-const API_KEY = '2ac077f6d6f9b4c6eab1376e8b459937';
+const API_KEY = 'e82f51095289d9792d8eb38e378c888f';
 const BASE_URL = 'https://api.themoviedb.org/3';
 const IMG_URL = 'https://image.tmdb.org/t/p/w300';
 
