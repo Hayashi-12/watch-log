@@ -3,6 +3,7 @@
 映画の視聴記録＆レビュー管理アプリ
 
 🔗 **Demo**：https://hayashi-12.github.io/watch-log/
+
 🔗 **GitHub**：https://github.com/Hayashi-12/watch-log
 
 ## 📸 アプリ画面
