@@ -24,7 +24,7 @@ import './App.css';
 
 function App() {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/watch-log">
       {/* ===== ヘッダー ===== */}
       <header className="header">
         <div className="logo">
