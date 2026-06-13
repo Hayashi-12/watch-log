@@ -112,7 +112,7 @@ npm install
 npm run dev
 ```
 
-ブラウザで `http://localhost:5173/` を開くとアプリが起動します。
+ブラウザで `http://localhost:5173/watch-log/` を開くとアプリが起動します。
 
 ---
 
